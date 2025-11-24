@@ -1,0 +1,117 @@
+---
+title: "1.Create Seurat V5 Object"
+author: "Lindsay Hayes & Felix Asare"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+# Analysis of single cell RNA seq of cell isolated from CSF of VS-PWH and HIV- controls.
+
+4 VS-PWH samples collected and sequenced at Johns Hopkins University at the SC Trancriptomics Core
+
+```{r, load packages, echo=FALSE, message=FALSE}
+library(Seurat)
+library(ggplot2)
+```
+
+### Create Merged Seurat v5 object
+
+```{r, warning=FALSE}
+options(Seurat.object.assay.version = "v5")
+
+BBB2005 <- Read10X(data.dir = "data/2.cellranger/BBB2005/outs/filtered_feature_bc_matrix/")
+BBB2005 <- CreateSeuratObject(counts = BBB2005, project = "BBB2005")
+BBB2005$ID <- "BBB2005"
+BBB2005$group <- "HIV"
+
+BBB2020 <- Read10X(data.dir = "data/2.cellranger/BBB2020/outs/filtered_feature_bc_matrix/")
+BBB2020 <- CreateSeuratObject(counts = BBB2020, project = "BBB2020")
+BBB2020$ID <- "BBB2020"
+BBB2020$group <- "HIV"
+
+BBB2166 <- Read10X(data.dir = "data/2.cellranger/BBB2166/outs/filtered_feature_bc_matrix/")
+BBB2166 <- CreateSeuratObject(counts = BBB2166, project = "BBB2166")
+BBB2166$ID <- "BBB2166"
+BBB2166$group <- "HIV"
+
+
+BBB2185 <- Read10X(data.dir = "data/2.cellranger/BBB2185/outs/filtered_feature_bc_matrix/")
+BBB2185 <- CreateSeuratObject(counts = BBB2185, project = "BBB2185")
+BBB2185$ID <- "BBB2185"
+BBB2185$group <- "HIV"
+
+
+### Merge all samples into one Seurat v5 object with samples in layers.
+HIV.merged.raw.data <- merge(BBB2005, y = c(BBB2020, BBB2166, BBB2185), add.cell.ids = c("BBB2005", "BBB2020", "BBB2166", "BBB2185"), project = "HIV")
+HIV.merged.raw.data
+
+```
+
+### Evaluate metadata
+
+```{r}
+table(HIV.merged.raw.data$group, HIV.merged.raw.data$ID)
+```
+
+### Add quality control metrics
+
+```{r}
+# store ribosomal & mitochondria percentage
+HIV.merged.raw.data <- PercentageFeatureSet(HIV.merged.raw.data, pattern = "^MT-", col.name = "percent.mt")
+HIV.merged.raw.data <- PercentageFeatureSet(HIV.merged.raw.data, pattern = "^RP[S/L]", col.name = "percent.rb")
+
+## evaluate metadata
+meta.data <- HIV.merged.raw.data@meta.data
+
+ggplot(meta.data, aes(color=orig.ident, x=nCount_RNA, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 500)
+ggsave("plots/1.QC/raw_hist_count.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=nFeature_RNA, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 200)
+ggsave("plots/1.QC/raw_hist_feature.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=percent.mt, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 15)
+ggsave("plots/1.QC/raw_hist_mito.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=percent.rb, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 5)
+ggsave("plots/1.QC/raw_hist_ribo.svg", width = 6, height = 5)
+
+VlnPlot(HIV.merged.raw.data, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 2)
+ggsave("plots/1.QC/raw_Vln.svg", width = 10, height = 10)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+ggsave("plots/1.QC/raw_countXfeat.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "nCount_RNA", feature2 = "percent.mt") 
+ggsave("plots/1.QC/raw_countXmito.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "percent.rb", feature2 = "percent.mt")
+ggsave("plots/1.QC/raw_riboXmito.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "percent.rb", feature2 = "nFeature_RNA")
+ggsave("plots/1.QC/raw_riboXfeat.svg", width = 5, height = 5)
+
+```
+
+```{r}
+save(HIV.merged.raw.data, file = "data/1.raw_data.rda")
+
+sessionInfo()
+```

@@ -1,0 +1,2801 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.555">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Lindsay Hayes &amp; Felix Asare">
+
+<title>3.Doublet Filter</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="3.QC_Doublet_files/libs/clipboard/clipboard.min.js"></script>
+<script src="3.QC_Doublet_files/libs/quarto-html/quarto.js"></script>
+<script src="3.QC_Doublet_files/libs/quarto-html/popper.min.js"></script>
+<script src="3.QC_Doublet_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="3.QC_Doublet_files/libs/quarto-html/anchor.min.js"></script>
+<link href="3.QC_Doublet_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="3.QC_Doublet_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="3.QC_Doublet_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="3.QC_Doublet_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="3.QC_Doublet_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">3.Doublet Filter</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Lindsay Hayes &amp; Felix Asare </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+36606 features across 7541 samples within 1 assay 
+Active assay: RNA (36606 features, 0 variable features)
+ 4 layers present: counts.BBB2005, counts.BBB2020, counts.BBB2166, counts.BBB2185</code></pre>
+</div>
+</div>
+<section id="prep-data-for-doublet-detection" class="level2">
+<h2 class="anchored" data-anchor-id="prep-data-for-doublet-detection">Prep data for doublet detection</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalize</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(HIV.merged.raw.data_filt, <span class="at">normalization.method =</span> <span class="st">"LogNormalize"</span>, <span class="at">scale.factor =</span> <span class="dv">10000</span>) <span class="co"># defaults</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2005</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2020</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2166</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2185</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identification of highly variable features (feature selection)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(HIV.merged.raw.data_filt, <span class="at">selection.method =</span> <span class="st">"vst"</span>, <span class="at">nfeatures =</span> <span class="dv">3000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2005</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2020</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2166</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2185</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Identify the 10 most highly variable genes</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>top10 <span class="ot">&lt;-</span> <span class="fu">head</span>(<span class="fu">VariableFeatures</span>(HIV.merged.raw.data_filt), <span class="dv">10</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># plot variable features with and without labels</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>plot1 <span class="ot">&lt;-</span> <span class="fu">VariableFeaturePlot</span>(HIV.merged.raw.data_filt)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">LabelPoints</span>(<span class="at">plot =</span> plot1, <span class="at">points =</span> top10, <span class="at">repel =</span> <span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>When using repel, set xnudge and ynudge to 0 for optimal results</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in scale_x_log10(): log-10 transformation introduced infinite values.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/unnamed-chunk-1-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Scaling the Data</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(HIV.merged.raw.data_filt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># PCA</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">RunPCA</span>(HIV.merged.raw.data_filt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>PC_ 1 
+Positive:  PLXDC2, SLC8A1, RBM47, CD86, UBE2E2, MEF2C, CSF2RA, FGD4, LRMDA, MARCH1 
+       ARHGAP24, TLR2, LYN, CLEC7A, CYBB, MAML3, LYZ, SYK, IFI30, IRAK3 
+       ATP8B4, MS4A6A, RTN1, RAB31, LRRK1, FCGR2A, DOCK4, GRK3, CSF1R, HDAC9 
+Negative:  SKAP1, TRBC2, CRIP1, IL7R, SAMD3, INPP4B, GZMA, CD96, THEMIS, CCL5 
+       LTB, CAMK4, RORA, GZMK, RIPOR2, TRBC1, PYHIN1, LINC01934, ANK3, NKG7 
+       PRKCQ-AS1, ITGA4, CTSW, CD8A, LINC01871, KLF12, CD69, CD8B, TRG-AS1, MYBL1 
+PC_ 2 
+Positive:  MALAT1, MBNL1, ARHGAP15, RABGAP1L, ZBTB20, SKAP1, RIPOR2, MT-ND3, FOXP1, DOCK10 
+       THEMIS, ITGA4, CD96, CBLB, SAMD3, KLF12, DPYD, PRKCB, FTX, FOXN3 
+       AKAP13, INPP4B, RUNX1, PDE7A, CAMK4, MT-CO3, DOCK8, ELMO1, P2RY8, SSH2 
+Negative:  FTL, FTH1, TPT1, RPS24, AIF1, RPS8, APOE, C1QA, C1QC, C1QB 
+       RPLP1, HLA-DRA, TYROBP, TMSB4X, HLA-DPB1, CST3, APOC1, HLA-DPA1, TMSB10, MARCKS 
+       TUBA1B, GAPDH, YBX1, F13A1, MARCO, IFITM3, SELENOP, HAMP, CD74, FSCN1 
+PC_ 3 
+Positive:  SLC11A1, C5AR1, NEAT1, CD14, DOCK4, DPYD, COLEC12, FCGBP, ARHGEF10L, ARHGAP6 
+       STARD13, TLR2, CYP27A1, RIN2, PILRA, MSR1, LYVE1, EPB41L3, SRGAP1, SLC9A9 
+       C3AR1, DRAM1, STAB1, FCGR3A, SAMD4A, CXADR, AL163541.1, CFD, SLC2A5, LINC02798 
+Negative:  BCL11A, CLEC4C, RHEX, SPIB, LILRA4, JCHAIN, SCN9A, FAM160A1, NIBAN3, EPHB1 
+       PTPRS, DACH1, LINC01478, LRRC26, AC007381.1, IRF8, GZMB, PLXNA4, COBLL1, DNASE1L3 
+       COL24A1, TPM2, BX284613.2, CUX2, RGS7, SCT, COL26A1, P2RY14, LAMP5, LINC01374 
+PC_ 4 
+Positive:  LTB, MAL, IL7R, SERINC5, FRY, AC139720.1, PRKCA, LEF1, CD40LG, CD4 
+       BCL2, TPT1, PRKCQ-AS1, TESPA1, ITGB1, MAP3K1, TIMP1, RPS8, TSHZ2, BACH2 
+       RPLP1, TNFRSF4, ADAM19, CISH, FAAH2, KLRB1, CCR7, TSPAN18, KLF2, INPP4B 
+Negative:  NKG7, CCL5, CCL4, AOAH, KLRK1, GZMA, CD8A, GZMH, GZMK, CD8B 
+       KLRD1, SLAMF7, XCL2, CMC1, CTSW, PLEK, CCL4L2, C1orf21, CRTAM, PPP2R2B 
+       DTHD1, JAKMIP2, ARHGAP26, CD160, LINC01871, TRGC2, TOX, PYHIN1, SFMBT2, SYNE1 
+PC_ 5 
+Positive:  LYVE1, CMKLR1, NRP1, C1QB, C1QC, C1QA, SELENOP, C5AR1, SLC2A5, APOE 
+       SLC11A1, LNCAROD, ARHGAP6, FCGBP, LINC01374, STARD13, SH3RF3, CXADR, RNF150, RNASE1 
+       NAV2, LHFPL2, FOLR2, SCIN, CYP27A1, CD14, MARCO, LINC02798, SLC1A3, COLEC12 
+Negative:  CD1C, FCER1A, CD1E, ST18, CD1D, CCSER1, IL1R2, CLEC10A, GPAT3, CACNA2D3 
+       RTN1, PARM1, PKIB, BASP1, ENHO, LGALS2, FLT3, TLR10, AL138899.1, MNDA 
+       AFF3, CPVL, CD300E, BATF3, AC092546.1, S100Z, PAK1, HLA-DQA2, MS4A4E, HLA-DRB5 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine the "Dimensionality" of the dataset</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ElbowPlot</span>(HIV.merged.raw.data_filt, <span class="at">ndims =</span> <span class="dv">50</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/unnamed-chunk-1-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cluster the cells</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">FindNeighbors</span>(HIV.merged.raw.data_filt, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">40</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Computing nearest neighbor graph</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Computing SNN</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">FindClusters</span>(HIV.merged.raw.data_filt, <span class="at">resolution =</span> <span class="fl">0.5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+
+Number of nodes: 7541
+Number of edges: 285099
+
+Running Louvain algorithm...
+Maximum modularity in 10 random starts: 0.8804
+Number of communities: 15
+Elapsed time: 0 seconds</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># UMAP</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt <span class="ot">&lt;-</span> <span class="fu">RunUMAP</span>(HIV.merged.raw.data_filt, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">40</span>, <span class="at">reduction.name =</span> <span class="st">"umap.unintegrated"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: The default method for RunUMAP has changed from calling Python UMAP via reticulate to the R-native UWOT using the cosine metric
+To use Python UMAP via reticulate, set umap.method to 'umap-learn' and metric to 'correlation'
+This message will be shown once per session</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:53:40 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:53:40 Read 7541 rows and found 40 numeric columns</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:53:40 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:53:40 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[----|----|----|----|----|----|----|----|----|----|</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>**************************************************|
+15:53:41 Writing NN index file to temp file /var/folders/tp/z4kv_q0d5j98lblm0rx44pl40000gr/T//RtmpNGx96j/file654966819c91
+15:53:41 Searching Annoy index using 1 thread, search_k = 3000
+15:53:42 Annoy recall = 100%
+15:53:42 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:53:42 Initializing from normalized Laplacian + noise (using RSpectra)
+15:53:42 Commencing optimization for 500 epochs, with 318494 positive edges
+15:53:48 Optimization finished</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+36606 features across 7541 samples within 1 assay 
+Active assay: RNA (36606 features, 3000 variable features)
+ 9 layers present: counts.BBB2005, counts.BBB2020, counts.BBB2166, counts.BBB2185, data.BBB2005, data.BBB2020, data.BBB2166, data.BBB2185, scale.data
+ 2 dimensional reductions calculated: pca, umap.unintegrated</code></pre>
+</div>
+</div>
+<section id="plots" class="level3">
+<h3 class="anchored" data-anchor-id="plots">plots</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(HIV.merged.raw.data_filt, <span class="at">reduction =</span> <span class="st">"umap.unintegrated"</span>, <span class="at">label =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/prefilter%20plots-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(HIV.merged.raw.data_filt, <span class="at">reduction =</span> <span class="st">"umap.unintegrated"</span>, <span class="at">group.by =</span> <span class="st">"orig.ident"</span>, <span class="at">split.by =</span> <span class="st">"orig.ident"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/prefilter%20plots-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(HIV.merged.raw.data_filt<span class="sc">$</span>seurat_clusters)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+   0    1    2    3    4    5    6    7    8    9   10   11   12   13   14 
+1406 1036  897  699  647  642  640  370  363  305  196  180   90   40   30 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(HIV.merged.raw.data_filt, <span class="at">file =</span> <span class="st">"data/3.pre-doublet.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="doublet-detection" class="level2">
+<h2 class="anchored" data-anchor-id="doublet-detection">Doublet Detection</h2>
+<p>https://github.com/chris-mcginnis-ucsf/DoubletFinder</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DoubletFinder)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="co"># https://uofuhealth.utah.edu/huntsman/shared-resources/gcb/htg/single-cell/genomics-10x</span></span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="co"># used to estimate nExp-poi percent duplicates based on capture.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="doubletfinder" class="level3">
+<h3 class="anchored" data-anchor-id="doubletfinder">2005 DoubletFinder</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">subset</span>(HIV.merged.raw.data_filt, <span class="at">subset =</span> ID <span class="sc">==</span><span class="st">"BBB2005"</span>)</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(BBB2005)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2005</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(BBB2005, <span class="at">selection.method =</span> <span class="st">"vst"</span>, <span class="at">nfeatures =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2005</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(BBB2005)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Different features in new layer data than already exists for
+scale.data</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">RunPCA</span>(BBB2005)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>PC_ 1 
+Positive:  CCL5, CRIP1, INPP4B, THEMIS, NKG7, PYHIN1, CBLB, LTB, LINC01934, IL7R 
+       ISG20, TRBC1, ANK3, GZMH, TOX, NCALD, TGFBR3, PPP2R2B, FKBP11, GLCCI1 
+       PZP, HOPX, IFNG-AS1, CCL4, CXCR6, DUSP2, LEF1, KLRB1, TRGC2, ARHGAP15 
+Negative:  PLXDC2, LRMDA, CSF1R, CLEC7A, MEF2C, MSR1, FCGR2A, LPCAT2, CST3, CYBB 
+       SLC8A1, CD86, UBE2E2, FCER1G, LYZ, FGD4, CSF2RA, KCTD12, IL13RA1, MS4A6A 
+       RBM47, ZFHX3, F13A1, TLR2, RAB31, GRK3, MARCKS, FGL2, SIRPA, MYOF 
+PC_ 2 
+Positive:  LYVE1, C1QB, C1QC, C1QA, SELENOP, APOE, FOLR2, MARCO, SLC2A5, RNASE1 
+       PLTP, APOC1, CXCL12, FSCN1, CYP27A1, C5AR1, STEAP3, RNASE2, SDC3, ATOH8 
+       CXADR, AL031056.1, SCIN, TREM2, CD14, STAB1, CTSL, AL356417.3, KHDRBS3, ABCA1 
+Negative:  CD1C, FLT3, AFF3, FCER1A, AC092546.1, AP001636.3, CD1E, P2RY14, ST18, CCSER1 
+       CD1D, GPAT3, BCL11A, S100Z, CACNA2D3, MGAM, GAPT, AC009093.2, DGKG, RTN1 
+       IL1R2, LGALS2, LINC02149, CLEC5A, PALM2-AKAP2, CLEC10A, PARM1, VCAN, CLEC17A, HLA-DOB 
+PC_ 3 
+Positive:  MALAT1, ARHGAP15, DPYD, SSH2, CBLB, FOXN3, DOCK10, ARHGAP26, DLEU2, THEMIS 
+       NEAT1, RUNX1, ELMO1, LINC01934, ARL15, SPIDR, DOCK8, TBC1D5, PDE3B, MBD5 
+       CAMK2D, INPP4B, MAML2, PYHIN1, ITPR2, ANK3, FNDC3A, LINC00278, PTPRJ, TBC1D22A 
+Negative:  TPT1, EEF1A1, TMSB10, FTH1, PKIB, FTL, CD1C, CD1E, HLA-DQB1, CLEC9A 
+       NME2, FCER1A, HLA-DPA1, BASP1, HLA-DPB1, VIM, FLT3, TUBA1B, YBX1, PLD4 
+       HLA-DQA1, RAB32, HLA-DRA, S100A11, C1orf54, C1orf162, S100A10, P2RY14, AC092809.2, TLR10 
+PC_ 4 
+Positive:  AOAH, CCL4, NKG7, CCL5, GZMH, CCL4L2, KLRD1, CMC1, HOPX, SRGN 
+       PPP2R2B, KLRC2, PDGFD, CD160, PYHIN1, KLRC3, PLEK, ARHGAP26, TRDC, NCR1 
+       TOX, PTMS, AC243829.2, C1orf21, ZEB2, DTHD1, KCNQ5, XCL1, PSTPIP2, KRT86 
+Negative:  BLK, CPNE5, BANK1, RALGPS2, COBLL1, CDK14, DENND5B, LINC00926, CD79A, LINC02397 
+       OSBPL10, PAX5, LINC01781, AIM2, SSPN, POU2AF1, GNG7, BACE2, LTB, LINC01811 
+       TNFRSF13C, AC022182.1, EBF1, TNFRSF13B, BACH2, BCL11A, FAAH2, AC008691.1, SAMD12, IGHG2 
+PC_ 5 
+Positive:  SERINC5, IL7R, LTB, PRKCA, MAL, TPT1, LEF1, TIMP1, S100A11, CD4 
+       EEF1A1, AC139720.1, FRY, BTBD11, CD40LG, INPP4B, PDE3B, RASGRF2, VCAN, EMP3 
+       SAMHD1, FMN1, RUNX2, SGMS2, HRH2, PVT1, LIMS1, FCN1, TXK, PKIA 
+Negative:  AOAH, CCL4, NKG7, KLRD1, COBLL1, MS4A1, LINC02397, BLK, CD160, GZMH 
+       AIM2, KLRC2, BANK1, CCL4L2, RALGPS2, GNG7, KLRC3, LINC00926, SSPN, CD79A 
+       OSBPL10, CPNE5, NCR1, TRDC, CMC1, LINC01811, PDGFD, TOX, TNFRSF13C, HOPX </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">RunUMAP</span>(BBB2005, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:06 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:06 Read 603 rows and found 30 numeric columns</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:06 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:06 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[----|----|----|----|----|----|----|----|----|----|</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>**************************************************|
+15:54:06 Writing NN index file to temp file /var/folders/tp/z4kv_q0d5j98lblm0rx44pl40000gr/T//RtmpNGx96j/file65495bdc0f23
+15:54:06 Searching Annoy index using 1 thread, search_k = 3000
+15:54:06 Annoy recall = 100%
+15:54:06 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:54:06 Initializing from normalized Laplacian + noise (using RSpectra)
+15:54:06 Commencing optimization for 500 epochs, with 22238 positive edges
+15:54:07 Optimization finished</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a>sweep.res.list <span class="ot">&lt;-</span> DoubletFinder<span class="sc">::</span><span class="fu">paramSweep</span>(BBB2005, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: fields
+Loading required package: spam
+Spam version 2.11-1 (2025-01-20) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: 'spam'
+
+The following objects are masked from 'package:base':
+
+    backsolve, forwardsolve
+
+Loading required package: viridisLite
+
+Try help(fields) to get started.
+Loading required package: parallel</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating artificial doublets for pN = 5%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 10%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 15%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 20%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 25%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 30%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb98"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb98-1"><a href="#cb98-1" aria-hidden="true" tabindex="-1"></a>sweep.stats <span class="ot">&lt;-</span> <span class="fu">summarizeSweep</span>(sweep.res.list, <span class="at">GT =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: KernSmooth
+KernSmooth 2.23 loaded
+Copyright M. P. Wand 1997-2009
+Loading required package: ROCR</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb100"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb100-1"><a href="#cb100-1" aria-hidden="true" tabindex="-1"></a>bcmvn <span class="ot">&lt;-</span> <span class="fu">find.pK</span>(sweep.stats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/BBB2005-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb102"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb102-1"><a href="#cb102-1" aria-hidden="true" tabindex="-1"></a>bcmvn<span class="sc">$</span>pK <span class="ot">&lt;-</span> <span class="fu">type.convert</span>(bcmvn<span class="sc">$</span>pK, <span class="at">as.is =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb102-2"><a href="#cb102-2" aria-hidden="true" tabindex="-1"></a>pK <span class="ot">&lt;-</span> bcmvn<span class="sc">$</span>pK[<span class="fu">which</span>(bcmvn<span class="sc">$</span>BCmetric <span class="sc">==</span> <span class="fu">max</span>(bcmvn<span class="sc">$</span>BCmetric))]</span>
+<span id="cb102-3"><a href="#cb102-3" aria-hidden="true" tabindex="-1"></a>pK</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.05</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb104"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb104-1"><a href="#cb104-1" aria-hidden="true" tabindex="-1"></a>annotations <span class="ot">&lt;-</span> BBB2005<span class="sc">@</span>meta.data<span class="sc">$</span>seurat_clusters</span>
+<span id="cb104-2"><a href="#cb104-2" aria-hidden="true" tabindex="-1"></a>homotypic.prop <span class="ot">&lt;-</span> <span class="fu">modelHomotypic</span>(annotations)</span>
+<span id="cb104-3"><a href="#cb104-3" aria-hidden="true" tabindex="-1"></a>nExp_poi <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fl">0.004</span><span class="sc">*</span><span class="fu">nrow</span>(BBB2005<span class="sc">@</span>meta.data)) </span>
+<span id="cb104-4"><a href="#cb104-4" aria-hidden="true" tabindex="-1"></a>nExp_poi.adj <span class="ot">&lt;-</span> <span class="fu">round</span>(nExp_poi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>homotypic.prop))</span>
+<span id="cb104-5"><a href="#cb104-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb104-6"><a href="#cb104-6" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2005, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi, <span class="at">reuse.pANN =</span> <span class="cn">FALSE</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating 201 artificial doublets..."
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Computing pANN..."
+[1] "Classifying doublets.."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb112"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb112-1"><a href="#cb112-1" aria-hidden="true" tabindex="-1"></a>BBB2005 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2005, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi.adj, <span class="at">reuse.pANN =</span> <span class="st">"pANN_0.25_0.05_2"</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb112-2"><a href="#cb112-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb112-3"><a href="#cb112-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2005<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.05</span>_2)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Doublet Singlet 
+      2     601 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb114"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb114-1"><a href="#cb114-1" aria-hidden="true" tabindex="-1"></a>BBB2005.doubletFinder <span class="ot">&lt;-</span> BBB2005<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.05</span>_2</span>
+<span id="cb114-2"><a href="#cb114-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(BBB2005.doubletFinder, <span class="at">file =</span> <span class="st">"data/3.Doublet/BBB2005.doubletFinder.rda"</span>)</span>
+<span id="cb114-3"><a href="#cb114-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(BBB2005)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="doubletfinder-1" class="level3">
+<h3 class="anchored" data-anchor-id="doubletfinder-1">2020 DoubletFinder</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb115"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb115-1"><a href="#cb115-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DoubletFinder)</span>
+<span id="cb115-2"><a href="#cb115-2" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">subset</span>(HIV.merged.raw.data_filt, <span class="at">subset =</span> ID <span class="sc">==</span><span class="st">"BBB2020"</span>)</span>
+<span id="cb115-3"><a href="#cb115-3" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(BBB2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2020</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb117"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb117-1"><a href="#cb117-1" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(BBB2020, <span class="at">selection.method =</span> <span class="st">"vst"</span>, <span class="at">nfeatures =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2020</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb119"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb119-1"><a href="#cb119-1" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(BBB2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Different features in new layer data than already exists for
+scale.data</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb122"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb122-1"><a href="#cb122-1" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">RunPCA</span>(BBB2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>PC_ 1 
+Positive:  CRIP1, LTB, IL7R, GZMK, INPP4B, GZMA, CCL5, TRBC1, CD96, RIPOR2 
+       CAMK4, CD69, THEMIS, NKG7, PYHIN1, MT2A, LINC01871, HIST1H4C, MAL, DUSP2 
+       ANK3, CD8B, LEF1, LINC01934, KLRK1, MYBL1, TRG-AS1, KLRB1, HIST1H1D, TRGC2 
+Negative:  PLXDC2, MEF2C, CYBB, SLC8A1, CLEC7A, FGD4, CSF1R, MARCH1, KCTD12, CD86 
+       LRMDA, MS4A6A, IL13RA1, LYZ, CST3, RAB31, FCGR2A, AIF1, TLR2, LYN 
+       MARCKS, MNDA, UBE2E2, CSF2RA, LPCAT2, SPI1, SYK, MYOF, LY86, LMO2 
+PC_ 2 
+Positive:  FTH1, TPT1, ACTB, FTL, S100A11, S100A6, VIM, GABARAP, AIF1, RAB32 
+       CSTA, SPI1, COTL1, PYCARD, LMO2, CST3, CLEC10A, LYZ, TUBA1B, RNASET2 
+       LST1, VSIG4, CTSH, MARCKS, RNASE6, C1orf162, CD33, PKIB, IL18, CALHM6 
+Negative:  ARHGAP15, MBNL1, MALAT1, ZBTB20, AC079793.1, RABGAP1L, UTRN, KLF12, FTX, DPYD 
+       DOCK10, CD96, PARP8, THEMIS, RIPOR2, CBLB, ATXN1, TTC17, MBD5, ELMO1 
+       ZEB1, RUNX1, INPP4B, LINC01934, NEAT1, TBC1D5, CAMK4, PYHIN1, FOXP1, FOXN3 
+PC_ 3 
+Positive:  C1QA, C1QB, C1QC, CYP27A1, TREM2, C5AR1, APOE, KHDRBS3, SCIN, MSR1 
+       CTTNBP2, SLC2A5, FCGBP, CD14, SELENOP, RNF150, ARHGAP6, LYVE1, FCGR3A, DSC2 
+       STARD13, SLC11A1, IGSF21, MAFB, C3, CXADR, SAMD4A, LINC01094, PGM5, FCGR1A 
+Negative:  FLT3, AFF3, BCL11A, P2RY14, FCER1A, CD1C, PLD4, SCN9A, GAPT, CD1E 
+       CCDC50, MPEG1, RHEX, PHACTR1, SPIB, WDFY4, SEMA3C, P2RY6, CLEC4C, BASP1 
+       BANK1, NIBAN3, COBLL1, MYO1E, APP, SCN1A-AS1, TCF4, DACH1, AC007381.1, IGKC 
+PC_ 4 
+Positive:  LTB, MAL, TPT1, IL7R, RPL23, AC139720.1, LEF1, BCL2, PRKCA, TSHZ2 
+       FRY, FAAH2, SERINC5, MAP3K1, BACH2, ANK3, MAST4, RNASET2, NFKB1, EGLN3 
+       TNF, TAB2, FMN1, AL109930.1, RPS11, CSGALNACT1, ARHGAP5, TBC1D4, GNAQ, INPP4B 
+Negative:  NKG7, CCL5, GZMA, KLRK1, AOAH, CCL4, GZMK, XCL2, GZMH, KLRD1 
+       LINC01871, CD8B, PLEK, CCL4L2, CMC1, C1orf21, HLA-DRB1, CD160, TRGC2, PYHIN1 
+       ARHGAP26, AC022075.1, HLA-DPB1, SYNE1, JAKMIP2, CD74, TOX, TRGC1, TRG-AS1, AF165147.1 
+PC_ 5 
+Positive:  FCN1, VCAN, CD93, PID1, S100A9, LGALS2, CD300E, S100A8, BST1, CD1D 
+       CDA, AC020656.1, CLEC12A, CSF3R, FPR3, SMIM25, IRAK3, CSTA, LRP1, CD36 
+       RTN1, NCF2, LDLRAD3, VCAN-AS1, SERINC5, CD163, LYZ, PRKCA, CPVL, S100Z 
+Negative:  C1QC, C1QB, C1QA, LINC01374, BLNK, APOE, DENND5B, KHDRBS3, ARHGAP6, SCIN 
+       GUCY1A1, RNF150, SELENOP, ADGRB3, NRP1, SLC2A5, TCF4, SPIB, COBLL1, NIBAN3 
+       RASSF8, CMKLR1, RHEX, CTTNBP2, APOC1, TREM2, HAMP, MEF2C-AS1, MGLL, BHLHE41 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb124"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb124-1"><a href="#cb124-1" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">RunUMAP</span>(BBB2020, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:28 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:28 Read 3065 rows and found 30 numeric columns</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:28 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:54:28 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[----|----|----|----|----|----|----|----|----|----|</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>**************************************************|
+15:54:28 Writing NN index file to temp file /var/folders/tp/z4kv_q0d5j98lblm0rx44pl40000gr/T//RtmpNGx96j/file65496f2234ae
+15:54:28 Searching Annoy index using 1 thread, search_k = 3000
+15:54:28 Annoy recall = 100%
+15:54:28 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:54:29 Initializing from normalized Laplacian + noise (using RSpectra)
+15:54:29 Commencing optimization for 500 epochs, with 130200 positive edges
+15:54:31 Optimization finished</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb132"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb132-1"><a href="#cb132-1" aria-hidden="true" tabindex="-1"></a>sweep.res.list <span class="ot">&lt;-</span> DoubletFinder<span class="sc">::</span><span class="fu">paramSweep</span>(BBB2020, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating artificial doublets for pN = 5%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 10%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 15%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 20%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 25%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 30%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb170"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb170-1"><a href="#cb170-1" aria-hidden="true" tabindex="-1"></a>sweep.stats <span class="ot">&lt;-</span> <span class="fu">summarizeSweep</span>(sweep.res.list, <span class="at">GT =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb170-2"><a href="#cb170-2" aria-hidden="true" tabindex="-1"></a>bcmvn <span class="ot">&lt;-</span> <span class="fu">find.pK</span>(sweep.stats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/BBB2020-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb172"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb172-1"><a href="#cb172-1" aria-hidden="true" tabindex="-1"></a>bcmvn<span class="sc">$</span>pK <span class="ot">&lt;-</span> <span class="fu">type.convert</span>(bcmvn<span class="sc">$</span>pK, <span class="at">as.is =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb172-2"><a href="#cb172-2" aria-hidden="true" tabindex="-1"></a>pK <span class="ot">&lt;-</span> bcmvn<span class="sc">$</span>pK[<span class="fu">which</span>(bcmvn<span class="sc">$</span>BCmetric <span class="sc">==</span> <span class="fu">max</span>(bcmvn<span class="sc">$</span>BCmetric))]</span>
+<span id="cb172-3"><a href="#cb172-3" aria-hidden="true" tabindex="-1"></a>pK</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.04</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb174"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb174-1"><a href="#cb174-1" aria-hidden="true" tabindex="-1"></a>annotations <span class="ot">&lt;-</span> BBB2020<span class="sc">@</span>meta.data<span class="sc">$</span>seurat_clusters</span>
+<span id="cb174-2"><a href="#cb174-2" aria-hidden="true" tabindex="-1"></a>homotypic.prop <span class="ot">&lt;-</span> <span class="fu">modelHomotypic</span>(annotations)</span>
+<span id="cb174-3"><a href="#cb174-3" aria-hidden="true" tabindex="-1"></a>nExp_poi <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fl">0.025</span><span class="sc">*</span><span class="fu">nrow</span>(BBB2020<span class="sc">@</span>meta.data)) </span>
+<span id="cb174-4"><a href="#cb174-4" aria-hidden="true" tabindex="-1"></a>nExp_poi.adj <span class="ot">&lt;-</span> <span class="fu">round</span>(nExp_poi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>homotypic.prop))</span>
+<span id="cb174-5"><a href="#cb174-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb174-6"><a href="#cb174-6" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2020, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi, <span class="at">reuse.pANN =</span> <span class="cn">FALSE</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating 1022 artificial doublets..."
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Computing pANN..."
+[1] "Classifying doublets.."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb182"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb182-1"><a href="#cb182-1" aria-hidden="true" tabindex="-1"></a>BBB2020 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2020, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi.adj, <span class="at">reuse.pANN =</span> <span class="st">"pANN_0.25_0.04_77"</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb182-2"><a href="#cb182-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb182-3"><a href="#cb182-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2020<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.04</span>_64)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Doublet Singlet 
+     64    3001 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb184"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb184-1"><a href="#cb184-1" aria-hidden="true" tabindex="-1"></a>BBB2020.doubletFinder <span class="ot">&lt;-</span> BBB2020<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.04</span>_64</span>
+<span id="cb184-2"><a href="#cb184-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(BBB2020.doubletFinder, <span class="at">file =</span> <span class="st">"data/3.Doublet/BBB2020.doubletFinder.rda"</span>)</span>
+<span id="cb184-3"><a href="#cb184-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(BBB2020)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="doubletfinder-2" class="level3">
+<h3 class="anchored" data-anchor-id="doubletfinder-2">2166 DoubletFinder</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb185"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb185-1"><a href="#cb185-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">subset</span>(HIV.merged.raw.data_filt, <span class="at">subset =</span> ID <span class="sc">==</span><span class="st">"BBB2166"</span>)</span>
+<span id="cb185-2"><a href="#cb185-2" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(BBB2166)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2166</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb187"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb187-1"><a href="#cb187-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(BBB2166, <span class="at">selection.method =</span> <span class="st">"vst"</span>, <span class="at">nfeatures =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2166</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb189"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb189-1"><a href="#cb189-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(BBB2166)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Different features in new layer data than already exists for
+scale.data</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb192"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb192-1"><a href="#cb192-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">RunPCA</span>(BBB2166)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>PC_ 1 
+Positive:  IL7R, TRBC2, INPP4B, GZMA, CCL5, LINC01934, GZMK, MYBL1, LTB, NKG7 
+       TRBC1, BCL2, ITGB1, CRIP1, PDE3B, HOPX, CST7, CD8A, KLRB1, S100A4 
+       CD8B, KLRK1, NCALD, PCAT1, PZP, LEF1, NELL2, DUSP2, TAFA1, CCL4 
+Negative:  UBE2E2, MEF2C, CSF2RA, AFF3, FLT3, P2RY14, WDFY4, MARCH1, TCF4, SYK 
+       TBC1D9, GAPT, BCL11A, SLC8A1, MS4A6A, PLD4, LYN, MPEG1, SULF2, LRRK1 
+       CIITA, FCER1G, RBM47, HLA-DRA, PLXDC2, HDAC9, CST3, KYNU, HLA-DQA1, FCER1A 
+PC_ 2 
+Positive:  RTN1, SLC8A1, PLXDC2, CD86, CD1C, FGL2, MNDA, LYZ, CLEC10A, IFI30 
+       BASP1, LY86, LRMDA, IRAK3, CPVL, FCGR2A, CLEC7A, IL13RA1, RAB32, PKIB 
+       ST18, AIF1, FCER1A, SPI1, MS4A4E, CD1E, ADAM28, GPAT3, CSF1R, VSIG4 
+Negative:  LILRA4, CLEC4C, PTPRS, LINC01478, JCHAIN, EPHB1, BX284613.2, NIBAN3, GZMB, LRRC26 
+       CUX2, RHEX, COL26A1, PLXNA4, RGS7, LAMP5, AC007381.1, COBLL1, LINC01374, SCT 
+       COL24A1, TSPAN13, NRP1, DACH1, DERL3, TPM2, AC097375.1, LINC00996, SMIM5, IGHM 
+PC_ 3 
+Positive:  RABGAP1L, RUNX1, NEAT1, CRIP1, INPP4B, S100A6, CCSER1, ATP2B1, MAML2, BCL2 
+       IL7R, ITGB1, S100A10, ST18, MS4A4E, SMYD3, MTDH, MDFIC, EIF4G3, CD1C 
+       ARHGAP26, CCL5, PDE3B, LINC01934, GZMA, VIM, CAMK1D, PHACTR2, PARM1, TLR10 
+Negative:  C1QB, APOE, C1QC, C1QA, APOC1, FTL, AIF1, F13A1, FTH1, FSCN1 
+       CD14, MARCKS, SELENOP, SCIN, TYROBP, HAMP, CST3, MARCO, CD68, HLA-DRA 
+       IFITM3, FCGBP, TREM2, TMSB4X, AL031056.1, BHLHE41, HLA-DPB1, C3, CYFIP1, FOLR2 
+PC_ 4 
+Positive:  NKG7, CCL5, CST7, GZMK, KLRK1, CD8A, CCL4, CD8B, GZMA, AOAH 
+       GZMH, CMC1, KLRC4, DTHD1, DUSP2, KLRD1, PLEK, ARHGAP26, CTSW, ZEB2 
+       TIGIT, C1orf21, TOX, AF165147.1, SFMBT2, TRGC2, LYST, SYTL3, LINC02446, PECAM1 
+Negative:  LTB, SERINC5, IL7R, FRY, MAL, KLRB1, PRKCA, MAP3K1, BCL2, CD4 
+       ADAM19, TNFRSF4, AC139720.1, BACH2, GNAQ, INPP4B, S100A11, PTPN13, ITGB1, LEF1 
+       PVT1, LIMS1, EEF1B2, TSHZ2, S100A4, DPP4, AL136456.1, BTBD11, TBC1D4, NFKB1 
+PC_ 5 
+Positive:  TMSB4X, CCSER1, TMSB10, BASP1, FLT3, ZNF366, TLR10, PARM1, BATF3, IDO1 
+       LGALS2, CD1C, RAB32, CRIP3, S100B, CLNK, CLEC9A, DNASE1L3, SCN7A, CCDC26 
+       NEGR1, P2RY6, AC005599.1, WDFY4, XCR1, TACSTD2, MYCL, CD1E, HLA-DQB1, NET1 
+Negative:  CYP27A1, DOCK4, MSR1, SLC11A1, OLR1, ARHGAP6, C5AR1, ABCA1, ARHGAP24, SH3RF3 
+       ATP8B4, RIN2, COLEC12, ARHGEF10L, STARD13, NEAT1, RAPH1, MACROD2, PID1, MITF 
+       CD14, TMEM176B, EPB41L3, TLR2, SRGAP1, SLC2A5, PEAK1, CD9, DTNA, FCGR2A </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb194"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb194-1"><a href="#cb194-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">RunUMAP</span>(BBB2166, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:13 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:13 Read 2925 rows and found 30 numeric columns</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:13 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:13 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[----|----|----|----|----|----|----|----|----|----|</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>**************************************************|
+15:55:13 Writing NN index file to temp file /var/folders/tp/z4kv_q0d5j98lblm0rx44pl40000gr/T//RtmpNGx96j/file65496bbeaffa
+15:55:13 Searching Annoy index using 1 thread, search_k = 3000
+15:55:14 Annoy recall = 100%
+15:55:14 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:55:14 Initializing from normalized Laplacian + noise (using RSpectra)
+15:55:14 Commencing optimization for 500 epochs, with 121576 positive edges
+15:55:16 Optimization finished</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb202"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb202-1"><a href="#cb202-1" aria-hidden="true" tabindex="-1"></a>sweep.res.list <span class="ot">&lt;-</span> DoubletFinder<span class="sc">::</span><span class="fu">paramSweep</span>(BBB2166, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating artificial doublets for pN = 5%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 10%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 15%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 20%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 25%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 30%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.005..."
+[1] "pK = 0.01..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb240"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb240-1"><a href="#cb240-1" aria-hidden="true" tabindex="-1"></a>sweep.stats <span class="ot">&lt;-</span> <span class="fu">summarizeSweep</span>(sweep.res.list, <span class="at">GT =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb240-2"><a href="#cb240-2" aria-hidden="true" tabindex="-1"></a>bcmvn <span class="ot">&lt;-</span> <span class="fu">find.pK</span>(sweep.stats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/BBB2166-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb242"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb242-1"><a href="#cb242-1" aria-hidden="true" tabindex="-1"></a>bcmvn<span class="sc">$</span>pK <span class="ot">&lt;-</span> <span class="fu">type.convert</span>(bcmvn<span class="sc">$</span>pK, <span class="at">as.is =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb242-2"><a href="#cb242-2" aria-hidden="true" tabindex="-1"></a>pK <span class="ot">&lt;-</span> bcmvn<span class="sc">$</span>pK[<span class="fu">which</span>(bcmvn<span class="sc">$</span>BCmetric <span class="sc">==</span> <span class="fu">max</span>(bcmvn<span class="sc">$</span>BCmetric))]</span>
+<span id="cb242-3"><a href="#cb242-3" aria-hidden="true" tabindex="-1"></a>pK</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.3</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb244"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb244-1"><a href="#cb244-1" aria-hidden="true" tabindex="-1"></a>annotations <span class="ot">&lt;-</span> BBB2166<span class="sc">@</span>meta.data<span class="sc">$</span>seurat_clusters</span>
+<span id="cb244-2"><a href="#cb244-2" aria-hidden="true" tabindex="-1"></a>homotypic.prop <span class="ot">&lt;-</span> <span class="fu">modelHomotypic</span>(annotations)</span>
+<span id="cb244-3"><a href="#cb244-3" aria-hidden="true" tabindex="-1"></a>nExp_poi <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fl">0.023</span><span class="sc">*</span><span class="fu">nrow</span>(BBB2166<span class="sc">@</span>meta.data)) </span>
+<span id="cb244-4"><a href="#cb244-4" aria-hidden="true" tabindex="-1"></a>nExp_poi.adj <span class="ot">&lt;-</span> <span class="fu">round</span>(nExp_poi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>homotypic.prop))</span>
+<span id="cb244-5"><a href="#cb244-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb244-6"><a href="#cb244-6" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2166, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi, <span class="at">reuse.pANN =</span> <span class="cn">FALSE</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating 975 artificial doublets..."
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Computing pANN..."
+[1] "Classifying doublets.."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb252"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb252-1"><a href="#cb252-1" aria-hidden="true" tabindex="-1"></a>BBB2166 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2166, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi.adj, <span class="at">reuse.pANN =</span> <span class="st">"pANN_0.25_0.3_67"</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb252-2"><a href="#cb252-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb252-3"><a href="#cb252-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2166<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.3</span>_54)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Doublet Singlet 
+     54    2871 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb254"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb254-1"><a href="#cb254-1" aria-hidden="true" tabindex="-1"></a>BBB2166.doubletFinder <span class="ot">&lt;-</span> BBB2166<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.3</span>_54</span>
+<span id="cb254-2"><a href="#cb254-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(BBB2166.doubletFinder, <span class="at">file =</span> <span class="st">"data/3.Doublet/BBB2166.doubletFinder.rda"</span>)</span>
+<span id="cb254-3"><a href="#cb254-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(BBB2166)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="doubletfinder-3" class="level3">
+<h3 class="anchored" data-anchor-id="doubletfinder-3">2185 DoubletFinder</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb255"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb255-1"><a href="#cb255-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">subset</span>(HIV.merged.raw.data_filt, <span class="at">subset =</span> ID <span class="sc">==</span><span class="st">"BBB2185"</span>)</span>
+<span id="cb255-2"><a href="#cb255-2" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">NormalizeData</span>(BBB2185)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts.BBB2185</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb257"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb257-1"><a href="#cb257-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">FindVariableFeatures</span>(BBB2185, <span class="at">selection.method =</span> <span class="st">"vst"</span>, <span class="at">nfeatures =</span> <span class="dv">2000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts.BBB2185</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb259"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb259-1"><a href="#cb259-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">ScaleData</span>(BBB2185)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Different features in new layer data than already exists for
+scale.data</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb262"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb262-1"><a href="#cb262-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">RunPCA</span>(BBB2185)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>PC_ 1 
+Positive:  CCL5, TRBC2, GZMA, THEMIS, GZMK, NKG7, CAMK4, INPP4B, LINC01934, TRBC1 
+       IL7R, CD8B, LINC01871, RORA, CD8A, SLC38A1, NCALD, MYBL1, DUSP2, ANK3 
+       FTL, HOPX, GZMH, PPP2R2B, TRGC1, AC015849.1, MCTP2, TGFBR3, LRP1B, IFNG-AS1 
+Negative:  PLXDC2, RBM47, ARHGAP24, SLC8A1, FGD4, MAML3, ATP8B4, TLR2, SRGAP2, RAPH1 
+       DOCK4, CD86, UBE2E2, LRMDA, DOCK5, CSF2RA, CIITA, MEF2A, ARHGAP22, DST 
+       FMNL2, SRGAP2B, CTNND1, ZSWIM6, DISC1, ETV6, MARCH1, WDFY3, GAB2, SLC11A1 
+PC_ 2 
+Positive:  FTL, FTH1, HLA-DRA, HLA-DPB1, HLA-DPA1, TYROBP, CST3, C1QA, CD74, C1QC 
+       C1QB, APOE, HLA-DRB1, FCER1G, TUBA1B, APOC1, HLA-DMA, HLA-DQA1, MARCKS, CD14 
+       HLA-DQB1, F13A1, LYZ, LST1, CYBB, NPC2, MARCO, CD68, MS4A6A, TREM2 
+Negative:  SLC38A1, RORA, MALAT1, INPP4B, CBLB, CRIP1, THEMIS, CAMK4, FOXP1, TXNIP 
+       CCL5, TRBC2, GZMA, ANK3, LINC01934, IL7R, PAM, GZMK, BCL2, TGFBR3 
+       MYBL1, NKG7, MTRNR2L12, CD69, MT-CO1, ZHX2, VIM, ABLIM1, LINC01871, PLCB1 
+PC_ 3 
+Positive:  KCNMA1, MGP, FTL, SLPI, FTH1, SFRP2, DCN, PTGDS, ADIRF, SLC26A2 
+       AL359555.4, ECRG4, IGFBP6, TIMP3, C19orf33, IGFBP5, PTN, SFRP4, CLU, RBP1 
+       CALD1, FOXC1, BOC, ADM, SCARA5, CTXN3, FBXL7, CAVIN1, COL1A1, THSD4 
+Negative:  INPP4B, THEMIS, CAMK4, CCL5, CBLB, MALAT1, GZMA, TRBC2, BCL2, LINC01934 
+       CRIP1, ANK3, RUNX1, IL7R, GZMK, RORA, NKG7, CD69, MYBL1, CXCR4 
+       MTRNR2L12, AOAH, LINC01871, CD8A, TRBC1, SLC38A1, PPP2R2B, CD8B, LTB, MT-CO1 
+PC_ 4 
+Positive:  THRB, AC079015.1, NAV2, ADAMTS17, CH25H, ABCA1, SELENOP, RNASE1, NCKAP5, LYVE1 
+       LNCAROD, AL357522.1, MRC1, NRP1, RNF150, SLCO2B1, HS3ST4, PTPRM, SLC2A5, KCNQ3 
+       C1QB, CD83, EYA2, PDGFB, TFRC, C1QC, APOE, CSGALNACT1, SPTLC3, LINC02798 
+Negative:  FCN1, VCAN, LGALS2, CD36, CD300LF, AC092546.1, CDA, CD300E, VCAN-AS1, S100Z 
+       SGMS2, CD1C, S100A12, AC020656.1, RETN, S100A8, MPEG1, AFF3, ADAMTS5, CLEC10A 
+       CFP, FCER1A, RTN1, ANPEP, DGKG, PID1, CSF3R, CREB5, S100A9, LGALS3 
+PC_ 5 
+Positive:  C19orf33, CRABP1, ADIRF, ID3, RAB7B, PTGDS, BEX3, FOXC1, RBP1, TSC22D1 
+       LMO4, MGP, NR4A3, RHOB, CRABP2, CTXN3, NR4A1, KCNMA1, ID1, IGF2 
+       S100A13, CAVIN1, CYB5A, NDUFA4L2, NR4A2, ZIC1, GNG11, GPAT3, CDKN1C, VIM 
+Negative:  HRH1, ME1, MARCO, NAV2, LYVE1, PIEZO2, AC016745.1, CYP1B1, TNXB, RNASE1 
+       NHS, DUSP6, SLC38A6, CR1, AL133346.1, MS4A4E, OLFML2A, ANK2, PMP22, RUNDC3B 
+       S100A9, GLT8D2, ITGB4, C1S, PLD1, PKN2-AS1, MTSS1, SPARC, ABI3BP, GASK1B </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb264"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb264-1"><a href="#cb264-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">RunUMAP</span>(BBB2185, <span class="at">dims =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:53 UMAP embedding parameters a = 0.9922 b = 1.112</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:53 Read 948 rows and found 30 numeric columns</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:53 Using Annoy for neighbor search, n_neighbors = 30</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>15:55:53 Building Annoy index with metric = cosine, n_trees = 50</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>0%   10   20   30   40   50   60   70   80   90   100%</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>[----|----|----|----|----|----|----|----|----|----|</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>**************************************************|
+15:55:53 Writing NN index file to temp file /var/folders/tp/z4kv_q0d5j98lblm0rx44pl40000gr/T//RtmpNGx96j/file65494ffec304
+15:55:53 Searching Annoy index using 1 thread, search_k = 3000
+15:55:53 Annoy recall = 100%
+15:55:53 Commencing smooth kNN distance calibration using 1 thread with target n_neighbors = 30
+15:55:53 Initializing from normalized Laplacian + noise (using RSpectra)
+15:55:53 Commencing optimization for 500 epochs, with 41228 positive edges
+15:55:54 Optimization finished</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb272"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb272-1"><a href="#cb272-1" aria-hidden="true" tabindex="-1"></a>sweep.res.list <span class="ot">&lt;-</span> DoubletFinder<span class="sc">::</span><span class="fu">paramSweep</span>(BBB2185, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating artificial doublets for pN = 5%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 10%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 15%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 20%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 25%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."
+[1] "Creating artificial doublets for pN = 30%"
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Defining neighborhoods..."
+[1] "Computing pANN across all pK..."
+[1] "pK = 0.02..."
+[1] "pK = 0.03..."
+[1] "pK = 0.04..."
+[1] "pK = 0.05..."
+[1] "pK = 0.06..."
+[1] "pK = 0.07..."
+[1] "pK = 0.08..."
+[1] "pK = 0.09..."
+[1] "pK = 0.1..."
+[1] "pK = 0.11..."
+[1] "pK = 0.12..."
+[1] "pK = 0.13..."
+[1] "pK = 0.14..."
+[1] "pK = 0.15..."
+[1] "pK = 0.16..."
+[1] "pK = 0.17..."
+[1] "pK = 0.18..."
+[1] "pK = 0.19..."
+[1] "pK = 0.2..."
+[1] "pK = 0.21..."
+[1] "pK = 0.22..."
+[1] "pK = 0.23..."
+[1] "pK = 0.24..."
+[1] "pK = 0.25..."
+[1] "pK = 0.26..."
+[1] "pK = 0.27..."
+[1] "pK = 0.28..."
+[1] "pK = 0.29..."
+[1] "pK = 0.3..."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb310"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb310-1"><a href="#cb310-1" aria-hidden="true" tabindex="-1"></a>sweep.stats <span class="ot">&lt;-</span> <span class="fu">summarizeSweep</span>(sweep.res.list, <span class="at">GT =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb310-2"><a href="#cb310-2" aria-hidden="true" tabindex="-1"></a>bcmvn <span class="ot">&lt;-</span> <span class="fu">find.pK</span>(sweep.stats)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/BBB2185-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>NULL</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb312"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb312-1"><a href="#cb312-1" aria-hidden="true" tabindex="-1"></a>bcmvn<span class="sc">$</span>pK <span class="ot">&lt;-</span> <span class="fu">type.convert</span>(bcmvn<span class="sc">$</span>pK, <span class="at">as.is =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb312-2"><a href="#cb312-2" aria-hidden="true" tabindex="-1"></a>pK <span class="ot">&lt;-</span> bcmvn<span class="sc">$</span>pK[<span class="fu">which</span>(bcmvn<span class="sc">$</span>BCmetric <span class="sc">==</span> <span class="fu">max</span>(bcmvn<span class="sc">$</span>BCmetric))]</span>
+<span id="cb312-3"><a href="#cb312-3" aria-hidden="true" tabindex="-1"></a>pK</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.25</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb314"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb314-1"><a href="#cb314-1" aria-hidden="true" tabindex="-1"></a>annotations <span class="ot">&lt;-</span> BBB2185<span class="sc">@</span>meta.data<span class="sc">$</span>seurat_clusters</span>
+<span id="cb314-2"><a href="#cb314-2" aria-hidden="true" tabindex="-1"></a>homotypic.prop <span class="ot">&lt;-</span> <span class="fu">modelHomotypic</span>(annotations)</span>
+<span id="cb314-3"><a href="#cb314-3" aria-hidden="true" tabindex="-1"></a>nExp_poi <span class="ot">&lt;-</span> <span class="fu">round</span>(<span class="fl">0.008</span><span class="sc">*</span><span class="fu">nrow</span>(BBB2185<span class="sc">@</span>meta.data)) </span>
+<span id="cb314-4"><a href="#cb314-4" aria-hidden="true" tabindex="-1"></a>nExp_poi.adj <span class="ot">&lt;-</span> <span class="fu">round</span>(nExp_poi<span class="sc">*</span>(<span class="dv">1</span><span class="sc">-</span>homotypic.prop))</span>
+<span id="cb314-5"><a href="#cb314-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb314-6"><a href="#cb314-6" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2185, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi, <span class="at">reuse.pANN =</span> <span class="cn">FALSE</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Creating 316 artificial doublets..."
+[1] "Creating Seurat object..."
+[1] "Normalizing Seurat object..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Normalizing layer: counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Finding variable genes..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Finding variable features for layer counts</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Scaling data..."</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Centering and scaling data matrix</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Running PCA..."
+[1] "Calculating PC distance matrix..."
+[1] "Computing pANN..."
+[1] "Classifying doublets.."</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb322"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb322-1"><a href="#cb322-1" aria-hidden="true" tabindex="-1"></a>BBB2185 <span class="ot">&lt;-</span> <span class="fu">doubletFinder</span>(BBB2185, <span class="at">PCs =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">30</span>, <span class="at">pN =</span> <span class="fl">0.25</span>, <span class="at">pK =</span> pK, <span class="at">nExp =</span> nExp_poi.adj, <span class="at">reuse.pANN =</span> <span class="st">"pANN_0.25_0.25_8"</span>, <span class="at">sct =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb322-2"><a href="#cb322-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb322-3"><a href="#cb322-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2185<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.25</span>_6)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+Doublet Singlet 
+      6     942 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb324"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb324-1"><a href="#cb324-1" aria-hidden="true" tabindex="-1"></a>BBB2185.doubletFinder <span class="ot">&lt;-</span> BBB2185<span class="sc">$</span>DF.classifications_0<span class="fl">.25</span>_0<span class="fl">.25</span>_6</span>
+<span id="cb324-2"><a href="#cb324-2" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(BBB2185.doubletFinder, <span class="at">file =</span> <span class="st">"data/3.Doublet/BBB2185.doubletFinder.rda"</span>)</span>
+<span id="cb324-3"><a href="#cb324-3" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(BBB2185)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="filter-out-doublets" class="level3">
+<h3 class="anchored" data-anchor-id="filter-out-doublets">Filter out Doublets</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb325"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb325-1"><a href="#cb325-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2005.doubletFinder)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>BBB2005.doubletFinder
+Doublet Singlet 
+      2     601 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb327"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb327-1"><a href="#cb327-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2020.doubletFinder)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>BBB2020.doubletFinder
+Doublet Singlet 
+     64    3001 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb329"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb329-1"><a href="#cb329-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2166.doubletFinder)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>BBB2166.doubletFinder
+Doublet Singlet 
+     54    2871 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb331"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb331-1"><a href="#cb331-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(BBB2185.doubletFinder)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>BBB2185.doubletFinder
+Doublet Singlet 
+      6     942 </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb333"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb333-1"><a href="#cb333-1" aria-hidden="true" tabindex="-1"></a>doubletFinder <span class="ot">&lt;-</span> <span class="fu">c</span>(BBB2005.doubletFinder, BBB2020.doubletFinder, BBB2166.doubletFinder, BBB2185.doubletFinder)</span>
+<span id="cb333-2"><a href="#cb333-2" aria-hidden="true" tabindex="-1"></a>HIV.merged.raw.data_filt<span class="sc">$</span>doubletFinder <span class="ot">&lt;-</span> doubletFinder</span>
+<span id="cb333-3"><a href="#cb333-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb333-4"><a href="#cb333-4" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(HIV.merged.raw.data_filt, <span class="at">split.by =</span> <span class="st">"doubletFinder"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/filter%20doublets-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb334"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb334-1"><a href="#cb334-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"plots/1.QC/Doublet1_umap.jpg"</span>, <span class="at">width =</span> <span class="dv">10</span>, <span class="at">height =</span> <span class="dv">6</span>)</span>
+<span id="cb334-2"><a href="#cb334-2" aria-hidden="true" tabindex="-1"></a><span class="fu">DimPlot</span>(HIV.merged.raw.data_filt, <span class="at">group.by =</span> <span class="st">"doubletFinder"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="3.QC_Doublet_files/figure-html/filter%20doublets-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb335"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb335-1"><a href="#cb335-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="st">"plots/1.QC/Doublet2_umap.jpg"</span>, <span class="at">width =</span> <span class="dv">5</span>, <span class="at">height =</span> <span class="dv">5</span>)</span>
+<span id="cb335-2"><a href="#cb335-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb335-3"><a href="#cb335-3" aria-hidden="true" tabindex="-1"></a>FinalFilter <span class="ot">&lt;-</span> <span class="fu">subset</span>(HIV.merged.raw.data_filt, <span class="at">subset =</span> doubletFinder<span class="sc">==</span><span class="st">"Singlet"</span>)</span>
+<span id="cb335-4"><a href="#cb335-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb335-5"><a href="#cb335-5" aria-hidden="true" tabindex="-1"></a>FinalFilter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>An object of class Seurat 
+36606 features across 7415 samples within 1 assay 
+Active assay: RNA (36606 features, 3000 variable features)
+ 9 layers present: counts.BBB2005, counts.BBB2020, counts.BBB2166, counts.BBB2185, data.BBB2005, data.BBB2020, data.BBB2166, data.BBB2185, scale.data
+ 2 dimensional reductions calculated: pca, umap.unintegrated</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb337"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb337-1"><a href="#cb337-1" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(FinalFilter, <span class="at">file =</span> <span class="st">"data/4.FinalFilter.rda"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb338"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb338-1"><a href="#cb338-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.4.1 (2024-06-14)
+Platform: aarch64-apple-darwin20
+Running under: macOS Sonoma 14.5
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Chicago
+tzcode source: internal
+
+attached base packages:
+[1] parallel  stats     graphics  grDevices utils     datasets  methods  
+[8] base     
+
+other attached packages:
+ [1] ROCR_1.0-11         KernSmooth_2.23-26  fields_16.3        
+ [4] viridisLite_0.4.2   spam_2.11-1         future_1.49.0      
+ [7] DoubletFinder_2.0.4 ggplot2_3.5.2       Seurat_5.2.1       
+[10] SeuratObject_5.0.2  sp_2.1-4           
+
+loaded via a namespace (and not attached):
+  [1] deldir_2.0-4           pbapply_1.7-2          gridExtra_2.3         
+  [4] rlang_1.1.6            magrittr_2.0.3         RcppAnnoy_0.0.22      
+  [7] spatstat.geom_3.3-5    matrixStats_1.5.0      ggridges_0.5.6        
+ [10] compiler_4.4.1         systemfonts_1.2.1      maps_3.4.2.1          
+ [13] png_0.1-8              vctrs_0.6.5            reshape2_1.4.4        
+ [16] stringr_1.5.1          pkgconfig_2.0.3        fastmap_1.2.0         
+ [19] labeling_0.4.3         promises_1.3.3         rmarkdown_2.29        
+ [22] ragg_1.3.3             purrr_1.0.4            xfun_0.52             
+ [25] jsonlite_2.0.0         goftest_1.2-3          later_1.4.2           
+ [28] spatstat.utils_3.1-2   irlba_2.3.5.1          cluster_2.1.8         
+ [31] R6_2.6.1               ica_1.0-3              stringi_1.8.4         
+ [34] RColorBrewer_1.1-3     spatstat.data_3.1-4    reticulate_1.42.0     
+ [37] parallelly_1.45.0      spatstat.univar_3.1-1  lmtest_0.9-40         
+ [40] scattermore_1.2        Rcpp_1.0.14            knitr_1.50            
+ [43] tensor_1.5             future.apply_1.11.3    zoo_1.8-12            
+ [46] sctransform_0.4.1      httpuv_1.6.16          Matrix_1.7-2          
+ [49] splines_4.4.1          igraph_2.1.4           tidyselect_1.2.1      
+ [52] rstudioapi_0.17.1      abind_1.4-8            yaml_2.3.10           
+ [55] spatstat.random_3.3-2  codetools_0.2-20       miniUI_0.1.1.1        
+ [58] spatstat.explore_3.3-4 listenv_0.9.1          lattice_0.22-6        
+ [61] tibble_3.2.1           plyr_1.8.9             withr_3.0.2           
+ [64] shiny_1.10.0           evaluate_1.0.4         Rtsne_0.17            
+ [67] fastDummies_1.7.5      survival_3.8-3         polyclip_1.10-7       
+ [70] fitdistrplus_1.2-2     pillar_1.10.1          plotly_4.10.4         
+ [73] generics_0.1.3         RcppHNSW_0.6.0         munsell_0.5.1         
+ [76] scales_1.3.0           globals_0.18.0         xtable_1.8-4          
+ [79] glue_1.8.0             lazyeval_0.2.2         tools_4.4.1           
+ [82] data.table_1.17.0      RSpectra_0.16-2        RANN_2.6.2            
+ [85] dotCall64_1.2          cowplot_1.1.3          grid_4.4.1            
+ [88] tidyr_1.3.1            colorspace_2.1-1       nlme_3.1-167          
+ [91] patchwork_1.3.0        cli_3.6.5              spatstat.sparse_3.1-0 
+ [94] textshaping_1.0.0      dplyr_1.1.4            uwot_0.2.2            
+ [97] gtable_0.3.6           digest_0.6.37          progressr_0.15.1      
+[100] ggrepel_0.9.6          htmlwidgets_1.6.4      farver_2.1.2          
+[103] htmltools_0.5.8.1      lifecycle_1.0.4        httr_1.4.7            
+[106] mime_0.13              MASS_7.3-64           </code></pre>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

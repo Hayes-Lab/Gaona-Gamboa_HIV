@@ -1,0 +1,65 @@
+---
+title: "2.QC Filter"
+author: "Lindsay Hayes"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, load packages, echo=FALSE, message=FALSE}
+library(Seurat)
+library(ggplot2)
+
+load("data/1.raw_data.rda")
+```
+
+### Label Filtering QCs
+```{r, set qc}
+HIV.merged.raw.data[["QC"]] = ifelse(HIV.merged.raw.data$nFeature_RNA < 200, 'low_feat', 'Pass')
+
+HIV.merged.raw.data[["QC"]] = ifelse(HIV.merged.raw.data$percent.mt > 25 & HIV.merged.raw.data$QC == 'Pass', 'high_mt', HIV.merged.raw.data@meta.data$QC)
+
+HIV.merged.raw.data[["QC"]] = ifelse(HIV.merged.raw.data$percent.rb < 3 & HIV.merged.raw.data$QC == 'Pass', 'low_ribo', HIV.merged.raw.data@meta.data$QC)
+
+table(HIV.merged.raw.data$QC)
+```
+
+
+```{r, plots}
+VlnPlot(HIV.merged.raw.data, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 2, group.by = "QC")
+ggsave("plots/1.QC/filt_Vln.svg", width = 10, height = 10)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "nCount_RNA", feature2 = "nFeature_RNA", group.by = "QC")
+ggsave("plots/1.QC/filt_countXfeat.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "nCount_RNA", feature2 = "percent.mt", group.by = "QC") 
+ggsave("plots/1.QC/filt_countXmito.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "percent.rb", feature2 = "percent.mt", group.by = "QC")
+ggsave("plots/1.QC/filt_riboXmito.svg", width = 5, height = 5)
+
+FeatureScatter(HIV.merged.raw.data, feature1 = "percent.rb", feature2 = "nFeature_RNA", group.by = "QC")
+ggsave("plots/1.QC/filt_riboXfeat.svg", width = 5, height = 5)
+
+tmp <- table(HIV.merged.raw.data$QC, HIV.merged.raw.data$ID)
+message("% of cells filtered")
+round(prop.table(tmp, margin = 2) * 100,1)
+
+write.csv(tmp, "writes/filtering_counts.csv")
+```
+
+### Filtering QC
+```{r, final filter}
+HIV.merged.raw.data_filt <- subset(HIV.merged.raw.data, subset = QC == "Pass")
+HIV.merged.raw.data_filt
+
+VlnPlot(HIV.merged.raw.data_filt, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 2)
+ggsave("plots/1.QC/filt_final_vln.jpg", width = 10, height = 10)
+
+save(HIV.merged.raw.data_filt, file = "data/2.filt1_data.rda")
+```
+
+```{r}
+sessionInfo()
+```

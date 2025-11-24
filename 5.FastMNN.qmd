@@ -1,0 +1,55 @@
+---
+title: "5. Fast MNN Integration"
+author: "Lindsay Hayes"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, load packages, echo=FALSE, message=FALSE}
+library(Seurat)
+library(ggplot2)
+library(SeuratWrappers)
+
+
+load("data/4.FinalFilter.rda")
+FinalFilter
+```
+
+### FastMNNIntegration
+
+```{r, MNN}
+set.seed(123)
+
+FinalFilter <- NormalizeData(FinalFilter)
+FinalFilter <- FindVariableFeatures(FinalFilter)
+FinalFilter <- ScaleData(FinalFilter)
+FinalFilter <- RunPCA(FinalFilter)
+FinalFilter <- IntegrateLayers(object = FinalFilter, 
+                               method = FastMNNIntegration,
+                               orig.reduction = "pca",
+                               new.reduction = "mnn", verbose = TRUE)
+
+# Visualize and cluster
+FinalFilter <- FindNeighbors(FinalFilter, reduction = "mnn", dims = 1:40)
+FinalFilter <- FindClusters(FinalFilter, resolution = 0.5, cluster.name = "mnn_clusters")
+FinalFilter <- RunUMAP(FinalFilter, reduction = "mnn", dims = 1:40, reduction.name = "umap.mnn")
+```
+```{r}
+DimPlot(FinalFilter, reduction = "umap.mnn", group.by = "mnn_clusters", label = T)
+ggsave("plots/2.FastMNN/umap_mnn.svg", width = 5, height = 5)
+
+GOI <- c("NCAM1", "CD4", "CD8A", "FOXP3", "CD79A","C1QA","CD14", "CSF1R", "AIF1")
+FeaturePlot(FinalFilter, features = GOI, order = T, reduction = "umap.mnn")
+ggsave("plots/2.FastMNN/umap_mnn_types.svg", width = 10, height = 10)
+DotPlot(FinalFilter, features = GOI)
+ggsave("plots/2.FastMNN/dot_mnn_types.svg", width = 10, height = 10)
+
+save(FinalFilter, file="data/5.MNN.rda")
+```
+
+```{r}
+sessionInfo()
+```
+

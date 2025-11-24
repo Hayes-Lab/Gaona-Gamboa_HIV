@@ -1,0 +1,71 @@
+---
+title: "4.QC Post Filter"
+author: "Lindsay Hayes & Felix Asare"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, load packages, echo=FALSE, message=FALSE}
+library(Seurat)
+library(ggplot2)
+
+load("data/4.FinalFilter.rda")
+```
+
+### Evaluate plots after filtering
+```{r}
+## evaluate metadata (7,415)
+meta.data <- FinalFilter@meta.data
+
+ggplot(meta.data, aes(color=orig.ident, x=nCount_RNA, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 500)
+ggsave("plots/1.QC/filt_final_hist_count.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=nFeature_RNA, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 200)
+ggsave("plots/1.QC/filt_final_hist_feature.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=percent.mt, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 25)
+ggsave("plots/1.QC/filt_final_hist_mito.svg", width = 6, height = 5)
+
+ggplot(meta.data, aes(color=orig.ident, x=percent.rb, fill= orig.ident)) + 
+  	geom_density(alpha = 0.2) + 
+  	theme_classic() +
+  	scale_x_log10() + 
+  	geom_vline(xintercept = 4)
+ggsave("plots/1.QC/filt_final_hist_ribo.svg", width = 6, height = 5)
+
+Idents(FinalFilter) <- FinalFilter$ID
+VlnPlot(FinalFilter, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.rb"), ncol = 2)
+ggsave("plots/1.QC/filt_final_Vln.svg", width = 10, height = 10)
+
+Idents(FinalFilter) <- FinalFilter$ID
+FeatureScatter(FinalFilter, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+ggsave("plots/1.QC/filt_final_countXfeat.svg", width = 5, height = 5)
+
+FeatureScatter(FinalFilter, feature1 = "nCount_RNA", feature2 = "percent.mt") 
+ggsave("plots/1.QC/filt_final_countXmito.svg", width = 5, height = 5)
+
+FeatureScatter(FinalFilter, feature1 = "percent.rb", feature2 = "percent.mt")
+ggsave("plots/1.QC/filt_final_riboXmito.svg", width = 5, height = 5)
+
+FeatureScatter(FinalFilter, feature1 = "percent.rb", feature2 = "nFeature_RNA")
+ggsave("plots/1.QC/filt_final_riboXfeat.svg", width = 5, height = 5)
+
+```
+
+```{r}
+sessionInfo()
+```

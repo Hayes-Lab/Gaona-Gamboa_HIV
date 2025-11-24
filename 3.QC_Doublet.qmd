@@ -1,0 +1,225 @@
+---
+title: "3.Doublet Filter"
+author: "Lindsay Hayes & Felix Asare"
+format: html
+editor: source
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, load packages, echo=FALSE, message=FALSE}
+library(Seurat)
+library(ggplot2)
+library(DoubletFinder)
+
+load("data/2.filt1_data.rda")
+HIV.merged.raw.data_filt
+```
+
+## Prep data for doublet detection
+
+```{r}
+set.seed(123)
+
+# Normalize
+HIV.merged.raw.data_filt <- NormalizeData(HIV.merged.raw.data_filt, normalization.method = "LogNormalize", scale.factor = 10000) # defaults
+
+# Identification of highly variable features (feature selection)
+HIV.merged.raw.data_filt <- FindVariableFeatures(HIV.merged.raw.data_filt, selection.method = "vst", nfeatures = 3000)
+
+# Identify the 10 most highly variable genes
+top10 <- head(VariableFeatures(HIV.merged.raw.data_filt), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(HIV.merged.raw.data_filt)
+LabelPoints(plot = plot1, points = top10, repel = TRUE)
+
+# Scaling the Data
+HIV.merged.raw.data_filt <- ScaleData(HIV.merged.raw.data_filt)
+
+# PCA
+HIV.merged.raw.data_filt <- RunPCA(HIV.merged.raw.data_filt)
+
+# Determine the "Dimensionality" of the dataset
+ElbowPlot(HIV.merged.raw.data_filt, ndims = 50)
+
+# Cluster the cells
+HIV.merged.raw.data_filt <- FindNeighbors(HIV.merged.raw.data_filt, dims = 1:40)
+HIV.merged.raw.data_filt <- FindClusters(HIV.merged.raw.data_filt, resolution = 0.5)
+
+# UMAP
+HIV.merged.raw.data_filt <- RunUMAP(HIV.merged.raw.data_filt, dims = 1:40, reduction.name = "umap.unintegrated")
+HIV.merged.raw.data_filt
+```
+
+### plots
+
+```{r, prefilter plots}
+DimPlot(HIV.merged.raw.data_filt, reduction = "umap.unintegrated", label = T)
+DimPlot(HIV.merged.raw.data_filt, reduction = "umap.unintegrated", group.by = "orig.ident", split.by = "orig.ident")
+table(HIV.merged.raw.data_filt$seurat_clusters)
+save(HIV.merged.raw.data_filt, file = "data/3.pre-doublet.rda")
+```
+
+## Doublet Detection
+
+https://github.com/chris-mcginnis-ucsf/DoubletFinder
+
+```{r}
+library(DoubletFinder)
+# https://uofuhealth.utah.edu/huntsman/shared-resources/gcb/htg/single-cell/genomics-10x
+# used to estimate nExp-poi percent duplicates based on capture.
+```
+
+### 2005 DoubletFinder
+
+```{r, BBB2005}
+BBB2005 <- subset(HIV.merged.raw.data_filt, subset = ID =="BBB2005")
+BBB2005 <- NormalizeData(BBB2005)
+BBB2005 <- FindVariableFeatures(BBB2005, selection.method = "vst", nfeatures = 2000)
+BBB2005 <- ScaleData(BBB2005)
+BBB2005 <- RunPCA(BBB2005)
+BBB2005 <- RunUMAP(BBB2005, dims = 1:30)
+
+sweep.res.list <- DoubletFinder::paramSweep(BBB2005, PCs = 1:30, sct = FALSE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+bcmvn$pK <- type.convert(bcmvn$pK, as.is = TRUE)
+pK <- bcmvn$pK[which(bcmvn$BCmetric == max(bcmvn$BCmetric))]
+pK
+
+annotations <- BBB2005@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.004*nrow(BBB2005@meta.data)) 
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+BBB2005 <- doubletFinder(BBB2005, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+BBB2005 <- doubletFinder(BBB2005, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi.adj, reuse.pANN = "pANN_0.25_0.05_2", sct = FALSE)
+
+table(BBB2005$DF.classifications_0.25_0.05_2)
+BBB2005.doubletFinder <- BBB2005$DF.classifications_0.25_0.05_2
+save(BBB2005.doubletFinder, file = "data/3.Doublet/BBB2005.doubletFinder.rda")
+rm(BBB2005)
+```
+
+### 2020 DoubletFinder
+
+```{r, BBB2020}
+library(DoubletFinder)
+BBB2020 <- subset(HIV.merged.raw.data_filt, subset = ID =="BBB2020")
+BBB2020 <- NormalizeData(BBB2020)
+BBB2020 <- FindVariableFeatures(BBB2020, selection.method = "vst", nfeatures = 2000)
+BBB2020 <- ScaleData(BBB2020)
+BBB2020 <- RunPCA(BBB2020)
+BBB2020 <- RunUMAP(BBB2020, dims = 1:30)
+
+sweep.res.list <- DoubletFinder::paramSweep(BBB2020, PCs = 1:30, sct = FALSE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+bcmvn$pK <- type.convert(bcmvn$pK, as.is = TRUE)
+pK <- bcmvn$pK[which(bcmvn$BCmetric == max(bcmvn$BCmetric))]
+pK
+
+annotations <- BBB2020@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.025*nrow(BBB2020@meta.data)) 
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+BBB2020 <- doubletFinder(BBB2020, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+BBB2020 <- doubletFinder(BBB2020, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi.adj, reuse.pANN = "pANN_0.25_0.04_77", sct = FALSE)
+
+table(BBB2020$DF.classifications_0.25_0.04_64)
+BBB2020.doubletFinder <- BBB2020$DF.classifications_0.25_0.04_64
+save(BBB2020.doubletFinder, file = "data/3.Doublet/BBB2020.doubletFinder.rda")
+rm(BBB2020)
+```
+
+
+### 2166 DoubletFinder
+
+```{r, BBB2166}
+BBB2166 <- subset(HIV.merged.raw.data_filt, subset = ID =="BBB2166")
+BBB2166 <- NormalizeData(BBB2166)
+BBB2166 <- FindVariableFeatures(BBB2166, selection.method = "vst", nfeatures = 2000)
+BBB2166 <- ScaleData(BBB2166)
+BBB2166 <- RunPCA(BBB2166)
+BBB2166 <- RunUMAP(BBB2166, dims = 1:30)
+
+sweep.res.list <- DoubletFinder::paramSweep(BBB2166, PCs = 1:30, sct = FALSE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+bcmvn$pK <- type.convert(bcmvn$pK, as.is = TRUE)
+pK <- bcmvn$pK[which(bcmvn$BCmetric == max(bcmvn$BCmetric))]
+pK
+
+annotations <- BBB2166@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.023*nrow(BBB2166@meta.data)) 
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+BBB2166 <- doubletFinder(BBB2166, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+BBB2166 <- doubletFinder(BBB2166, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi.adj, reuse.pANN = "pANN_0.25_0.3_67", sct = FALSE)
+
+table(BBB2166$DF.classifications_0.25_0.3_54)
+BBB2166.doubletFinder <- BBB2166$DF.classifications_0.25_0.3_54
+save(BBB2166.doubletFinder, file = "data/3.Doublet/BBB2166.doubletFinder.rda")
+rm(BBB2166)
+```
+
+### 2185 DoubletFinder
+
+```{r, BBB2185}
+BBB2185 <- subset(HIV.merged.raw.data_filt, subset = ID =="BBB2185")
+BBB2185 <- NormalizeData(BBB2185)
+BBB2185 <- FindVariableFeatures(BBB2185, selection.method = "vst", nfeatures = 2000)
+BBB2185 <- ScaleData(BBB2185)
+BBB2185 <- RunPCA(BBB2185)
+BBB2185 <- RunUMAP(BBB2185, dims = 1:30)
+
+sweep.res.list <- DoubletFinder::paramSweep(BBB2185, PCs = 1:30, sct = FALSE)
+sweep.stats <- summarizeSweep(sweep.res.list, GT = FALSE)
+bcmvn <- find.pK(sweep.stats)
+bcmvn$pK <- type.convert(bcmvn$pK, as.is = TRUE)
+pK <- bcmvn$pK[which(bcmvn$BCmetric == max(bcmvn$BCmetric))]
+pK
+
+annotations <- BBB2185@meta.data$seurat_clusters
+homotypic.prop <- modelHomotypic(annotations)
+nExp_poi <- round(0.008*nrow(BBB2185@meta.data)) 
+nExp_poi.adj <- round(nExp_poi*(1-homotypic.prop))
+
+BBB2185 <- doubletFinder(BBB2185, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+BBB2185 <- doubletFinder(BBB2185, PCs = 1:30, pN = 0.25, pK = pK, nExp = nExp_poi.adj, reuse.pANN = "pANN_0.25_0.25_8", sct = FALSE)
+
+table(BBB2185$DF.classifications_0.25_0.25_6)
+BBB2185.doubletFinder <- BBB2185$DF.classifications_0.25_0.25_6
+save(BBB2185.doubletFinder, file = "data/3.Doublet/BBB2185.doubletFinder.rda")
+rm(BBB2185)
+```
+
+### Filter out Doublets
+
+```{r, filter doublets}
+table(BBB2005.doubletFinder)
+table(BBB2020.doubletFinder)
+table(BBB2166.doubletFinder)
+table(BBB2185.doubletFinder)
+
+doubletFinder <- c(BBB2005.doubletFinder, BBB2020.doubletFinder, BBB2166.doubletFinder, BBB2185.doubletFinder)
+HIV.merged.raw.data_filt$doubletFinder <- doubletFinder
+
+DimPlot(HIV.merged.raw.data_filt, split.by = "doubletFinder")
+ggsave("plots/1.QC/Doublet1_umap.jpg", width = 10, height = 6)
+DimPlot(HIV.merged.raw.data_filt, group.by = "doubletFinder")
+ggsave("plots/1.QC/Doublet2_umap.jpg", width = 5, height = 5)
+
+FinalFilter <- subset(HIV.merged.raw.data_filt, subset = doubletFinder=="Singlet")
+
+FinalFilter
+
+save(FinalFilter, file = "data/4.FinalFilter.rda")
+```
+
+```{r}
+sessionInfo()
+```
